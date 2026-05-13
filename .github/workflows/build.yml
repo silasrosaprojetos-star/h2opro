@@ -18,13 +18,11 @@ jobs:
         with:
           python-version: '3.11'
 
-      # Instalamos explicitamente as bibliotecas nativas do SDL2 para sanar o erro do pkg-config
       - name: Instalar dependências do sistema
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev
 
-      # Forçamos o uso do Cython da série 0.29.x para evitar a quebra de compilação da versão 3.0
       - name: Instalar Buildozer e Cython Compatível
         run: |
           pip install --upgrade pip
@@ -40,7 +38,12 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildozer-
 
-      # Executamos o Buildozer de forma limpa (sem travas de pipefail)
+      # Limpa resquícios de compilações antigas para forçar a leitura correta do buildozer.spec
+      - name: Limpar cache do compilador interno
+        run: |
+          rm -rf .buildozer/android/platform/python-for-android
+          rm -rf ~/.buildozer/android/platform/python-for-android
+
       - name: Compilar o APK com Buildozer
         run: |
           buildozer android debug
