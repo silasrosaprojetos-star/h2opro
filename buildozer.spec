@@ -14,6 +14,8 @@ android.api = 33
 android.minapi = 21
 android.build_tools = 33.0.0
 android.accept_sdk_license = True
+p4a.branch = stable
+android.archs = arm64-v8a, armeabi-v7a
 
 # Definimos as arquiteturas de processador e fixamos o NDK 25b (versões mais novas como a r28c quebram o Cython)
 android.archs = arm64-v8a, armeabi-v7a
