@@ -40,7 +40,9 @@ jobs:
 
       - name: Compilar o APK com Buildozer
         run: |
-          buildozer android debug
+          # Desativa o pipefail para o 'yes' não causar falso positivo de erro
+          set +o pipefail
+          yes | buildozer android debug
 
       - name: Disponibilizar o APK para Download
         uses: actions/upload-artifact@v4
