@@ -64,4 +64,12 @@ jobs:
           buildozer android debug 2>&1
         env:
           BUILDOZER_WARN_ON_ROOT: "0"
-          JAVA_HOME:
+          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
+          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: H2OPro-APK
+          path: bin/*.apk
