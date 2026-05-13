@@ -53,17 +53,13 @@ jobs:
             "build-tools;33.0.0" \
             "platforms;android-33"
 
-      - name: Limpar cache do Buildozer
-        run: |
-          rm -rf ~/.buildozer
-
       - name: Cache Buildozer
         uses: actions/cache@v4
         with:
           path: ~/.buildozer
-          key: buildozer-${{ runner.os }}-v2-${{ hashFiles('buildozer.spec') }}
+          key: buildozer-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
           restore-keys: |
-            buildozer-${{ runner.os }}-v2-
+            buildozer-${{ runner.os }}-
 
       - name: Build APK
         run: |
@@ -72,4 +68,10 @@ jobs:
           BUILDOZER_WARN_ON_ROOT: "0"
           JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
           ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
-          ANDROID_HOME: ${{ env.ANDROID_
+          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: H2OPro-APK
+          path: bin/*.apk
