@@ -3,7 +3,7 @@ name: Build Android APK
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: 
+  workflow_dispatch:
 
 jobs:
   build:
@@ -13,19 +13,22 @@ jobs:
       - name: Checkout do código
         uses: actions/checkout@v4
 
+      # Instala as ferramentas básicas do Linux necessárias para compilar em C/Python
       - name: Instalar dependências do sistema
         run: |
           sudo apt-get update
           sudo apt-get install -y git zip unzip openjdk-17-jdk python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libssl-dev
 
+      # Executa a compilação do Buildozer em uma Action oficial que já configura o Android SDK/NDK sozinha
       - name: Compilar com Buildozer
         uses: ArtemSBulgakov/buildozer-action@v1
         with:
           command: buildozer android debug
           buildozer_version: latest
 
+      # Pega o arquivo .apk gerado na pasta bin/ e disponibiliza para download
       - name: Disponibilizar o APK para Download
         uses: actions/upload-artifact@v4
         with:
-          name: meu-aplicativo-apk
+          name: h2opro-apk
           path: bin/*.apk
