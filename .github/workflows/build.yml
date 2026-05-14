@@ -1,72 +1,73 @@
 name: Build APK H2O Pro
-on: [push]
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-22.04
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout código
+        uses: actions/checkout@v4
 
-      - name: Set up Python 3.10
+      - name: Configurar Python 3.10
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: '3.10'
 
-      - name: Install system dependencies
+      - name: Instalar dependências do sistema
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             git zip unzip openjdk-17-jdk \
-            python3-pip python3-venv \
+            libgl1-mesa-dev libgles2-mesa-dev \
             libffi-dev libssl-dev \
-            libtool-bin autoconf automake m4 libltdl-dev \
             build-essential ccache \
-            libncurses5 libncurses5-dev libstdc++6 zlib1g-dev
+            autoconf automake libtool \
+            python3-pip python3-setuptools
 
-      - name: Install Python dependencies
+      - name: Instalar Buildozer e dependências Python
         run: |
-          python -m pip install --upgrade pip
-          pip install \
-            cython==0.29.33 \
-            git+https://github.com/kivy/buildozer.git \
-            git+https://github.com/kivy/python-for-android.git
+          pip install --upgrade pip
+          pip install buildozer cython==0.29.33
 
-      - name: Set up Android SDK
-        run: |
-          mkdir -p $HOME/android-sdk/cmdline-tools
-          wget -q https://dl.google.com/android/repository/commandlinetools-linux-9477386_latest.zip -O cmdline-tools.zip
-          unzip -q cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
-          mv $HOME/android-sdk/cmdline-tools/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+      - name: Cache Buildozer global (NDK, SDK, recipes)
+        uses: actions/cache@v4
+        with:
+          path: ~/.buildozer
+          key: buildozer-global-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}
+          restore-keys: |
+            buildozer-global-${{ runner.os }}-
 
-          export SDKMANAGER="$HOME/android-sdk/cmdline-tools/latest/bin/sdkmanager"
+      - name: Cache build local do projeto
+        uses: actions/cache@v4
+        with:
+          path: .buildozer
+          key: buildozer-local-${{ runner.os }}-${{ hashFiles('buildozer.spec') }}-${{ hashFiles('main.py') }}
+          restore-keys: |
+            buildozer-local-${{ runner.os }}-
 
-          echo "ANDROID_SDK_ROOT=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
-          echo "$HOME/android-sdk/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/platform-tools" >> $GITHUB_PATH
-          echo "$HOME/android-sdk/build-tools/33.0.0" >> $GITHUB_PATH
+      - name: Cache ccache (compilação C/C++)
+        uses: actions/cache@v4
+        with:
+          path: ~/.ccache
+          key: ccache-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            ccache-${{ runner.os }}-
 
-          yes | $SDKMANAGER --sdk_root=$HOME/android-sdk --licenses > /dev/null 2>&1 || true
-          $SDKMANAGER --sdk_root=$HOME/android-sdk \
-            "platform-tools" \
-            "build-tools;33.0.0" \
-            "platforms;android-33"
-
-      - name: Limpar cache antigo
-        run: rm -rf ~/.buildozer
-
-      - name: Build APK
-        run: |
-          buildozer android debug 2>&1
+      - name: Compilar APK
         env:
-          BUILDOZER_WARN_ON_ROOT: "0"
-          JAVA_HOME: /usr/lib/jvm/java-17-openjdk-amd64
-          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
-          ANDROID_HOME: ${{ env.ANDROID_HOME }}
+          BUILDOZER_WARN_ON_ROOT: 0
+        run: |
+          buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: H2OPro-APK
+          name: h2opro-debug
           path: bin/*.apk
+          retention-days: 30
